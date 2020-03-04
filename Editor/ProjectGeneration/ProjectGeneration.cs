@@ -119,9 +119,19 @@ namespace VSCodeEditor
         public string ProjectDirectory { get; }
         IAssemblyNameProvider IGenerator.AssemblyNameProvider => m_AssemblyNameProvider;
 
-        [Obsolete("Use AssemblyNameProvider.ToggleProjectGeneration(ProjectGenerationFlag)", true)]
         public void GenerateAll(bool generateAll)
         {
+            m_AssemblyNameProvider.ToggleProjectGeneration(
+                ProjectGenerationFlag.BuiltIn
+                | ProjectGenerationFlag.Embedded
+                | ProjectGenerationFlag.Git
+                | ProjectGenerationFlag.Local
+#if UNITY_2019_3_OR_NEWER
+                | ProjectGenerationFlag.LocalTarBall
+#endif
+                | ProjectGenerationFlag.PlayerAssemblies
+                | ProjectGenerationFlag.Registry
+                | ProjectGenerationFlag.Unknown);
         }
 
         readonly string m_ProjectName;
