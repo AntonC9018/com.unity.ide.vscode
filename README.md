@@ -1,0 +1,1 @@
+See https://github.com/AntonC9018/com.unity.ide.vscode-dev/ for details.
