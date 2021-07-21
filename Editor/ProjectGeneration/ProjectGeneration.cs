@@ -140,22 +140,10 @@ namespace VSCodeEditor
         const string k_TargetFrameworkVersion = "v4.7.1";
         const string k_TargetLanguageVersion = "latest";
         
-        private const string k_projectRootFolder = "project_folder_root";
-        private static string _projectRootFolder = EditorPrefs.GetString(k_projectRootFolder, 
-            Directory.GetParent(Application.dataPath).FullName);
-        public static string s_DefaultProjectRootFolder 
-        { 
-            get => _projectRootFolder;
-            set {
-                EditorPrefs.SetString(k_projectRootFolder, value);
-                _projectRootFolder = value;
-            }
-        }
-
         public string ProjectRootDirectory { get; }
 
         public ProjectGeneration()
-            : this(s_DefaultProjectRootFolder, Directory.GetParent(Application.dataPath).FullName) {}
+            : this(VSCodeScriptEditor.ProjectRootFolder, Directory.GetParent(Application.dataPath).FullName) {}
 
         public ProjectGeneration(string projectRootDirectory, string projectDirectory)
             : this(projectRootDirectory, projectDirectory, new AssemblyNameProvider(), new FileIOProvider(), new GUIDProvider()) { }
@@ -237,12 +225,21 @@ namespace VSCodeEditor
 
         private IEnumerable<AdditionalProjectInfo> GetAdditionalProjectInfos()
         {
-            return _ScanDirectoryForProjectFiles(ProjectRootDirectory, ignoreFolder: new DirectoryInfo(ProjectDirectory).FullName)
+            if (!Directory.Exists(ProjectRootDirectory))
+            {
+                return Enumerable.Empty<AdditionalProjectInfo>();
+            }
+            return _ScanDirectoryForProjectFiles(
+                // We must have the both the full path, and the system directory separators
+                new DirectoryInfo(ProjectRootDirectory).FullName,
+                ignoreFolder: new DirectoryInfo(ProjectDirectory).FullName)
+
                 .Select(path => new AdditionalProjectInfo(path, ProjectGuid));
         }
 
         /// <summary>
         /// Returns paths to .csproj files within `root`, that are not within `ingore`.
+        /// Both the `rootFolder` and the `ignoreFolder` must have the system directory separators (slashes).
         /// </summary>
         private static IEnumerable<string> _ScanDirectoryForProjectFiles(string rootFolder, string ignoreFolder)
         {
@@ -739,6 +736,7 @@ namespace VSCodeEditor
                 relevantAssemblies
                     .Select(i => GetProjectActiveConfigurations(ProjectGuid(i.name)))
                     .Concat(additionalProjectPaths.Select(p => GetProjectActiveConfigurations(p.Name))));
+
             return string.Format(GetSolutionText(), fileversion, vsversion, projectEntries, projectConfigurations);
         }
 
@@ -766,6 +764,11 @@ namespace VSCodeEditor
                 Path.GetFileName(ProjectFile(i)),
                 ProjectGuid(i.name)
             )).Concat(additionalProjectPaths.Select(GetProjectEntryFromProjectFile));
+
+            foreach (var entry in projectEntries)
+            {
+                UnityEngine.Debug.Log(entry);
+            }
 
             return string.Join(k_WindowsNewline, projectEntries);
         }

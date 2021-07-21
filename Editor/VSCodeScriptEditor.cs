@@ -25,8 +25,6 @@ namespace VSCodeEditor
 
         static string DefaultApp => EditorPrefs.GetString("kScriptsDefaultApp");
 
-        static string DefaultArgument { get; } = "\"$(ProjectPath)\" -g \"$(File)\":$(Line):$(Column)";
-
         string Arguments
         {
             get => m_Arguments ?? (m_Arguments = EditorPrefs.GetString(vscode_argument, DefaultArgument));
@@ -36,6 +34,21 @@ namespace VSCodeEditor
                 EditorPrefs.SetString(vscode_argument, value);
             }
         }
+        
+        private const string project_root_folder = "project_folder_root";
+        private static readonly GUIContent k_ResetProjectRoot = EditorGUIUtility.TrTextContent("Reset project root");
+        private static readonly string DefaultProjectRootFolder = Directory.GetParent(Application.dataPath).FullName;
+        private static string _projectRootFolder = EditorPrefs.GetString(project_root_folder, DefaultProjectRootFolder);
+        public static string ProjectRootFolder 
+        { 
+            get => _projectRootFolder;
+            set {
+                EditorPrefs.SetString(project_root_folder, value);
+                _projectRootFolder = value;
+            }
+        }
+
+        static string DefaultArgument { get; } = $"\"{ProjectRootFolder}\" -g \"$(File)\":$(Line):$(Column)";
 
         static string[] defaultExtensions
         {
@@ -110,6 +123,16 @@ namespace VSCodeEditor
             if (GUILayout.Button(k_ResetArguments, GUILayout.Width(120)))
             {
                 Arguments = DefaultArgument;
+            }
+
+            ProjectRootFolder = EditorGUILayout.TextField("Project Root Folder", ProjectRootFolder);
+            if (GUILayout.Button(k_ResetProjectRoot, GUILayout.Width(120)))
+            {
+                ProjectRootFolder = DefaultProjectRootFolder;
+            }
+            if (!Directory.Exists(ProjectRootFolder))
+            {
+                EditorGUILayout.HelpBox("The given folder does not exist.", MessageType.Error);
             }
 
             EditorGUILayout.LabelField("Generate .csproj files for:");
