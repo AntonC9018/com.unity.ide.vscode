@@ -159,7 +159,7 @@ namespace VSCodeEditor
 
         public void SyncIfNeeded(string[] addedFiles, string[] deletedFiles, string[] movedFiles, string[] movedFromFiles, string[] importedFiles)
         {
-            m_ProjectGeneration.SyncIfNeeded(addedFiles.Union(deletedFiles).Union(movedFiles).Union(movedFromFiles).ToList(), importedFiles);
+            m_ProjectGeneration.SyncIfNeeded(addedFiles.Union(deletedFiles).Union(movedFiles).Union(movedFromFiles).ToArray(), importedFiles);
         }
 
         public void SyncAll()
@@ -252,7 +252,7 @@ namespace VSCodeEditor
 
         static VSCodeScriptEditor()
         {
-            var editor = new VSCodeScriptEditor(new VSCodeDiscovery(), new ProjectGeneration(Directory.GetParent(Application.dataPath).FullName));
+            var editor = new VSCodeScriptEditor(new VSCodeDiscovery(), new ProjectGeneration());
             CodeEditor.Register(editor);
 
             if (IsVSCodeInstallation(CodeEditor.CurrentEditorInstallation))
